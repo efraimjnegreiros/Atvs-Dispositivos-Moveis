@@ -15,7 +15,7 @@
         <Stack.Screen
           name="Home"
           component={Home}
-          options={{ headerShown: false }}  // Desabilita o header na tela Home
+          options={{ headerShown: false }}  
         />
         </Stack.Navigator>
       </NavigationContainer>
