@@ -4,4 +4,10 @@ Este repositório foi criado com a finalidade de armazenar as atividades e conte
 
 Aqui você encontrará projetos e exemplos relacionados ao desenvolvimento para dispositivos móveis, utilizando a tecnologia **Expo**.
 
+## Tela desenvolvida
+
+### Tela Home
+
+![Tela Home](./"Tela Feita".png")
+
 ---
