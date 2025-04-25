@@ -9,10 +9,8 @@ function Exibicao({ route, navigation }) {
     buscarContatos();
   }, []);
 
-  // Função para buscar os contatos via API
   const buscarContatos = async () => {
     try {
-      // Use o IP local correto em vez de localhost
       const response = await axios.get('http://127.0.0.1:3000/contatos'); 
       if (response.status === 201 || response.status === 200) {
         setContatos(response.data); 
