@@ -1,0 +1,3 @@
+# Arquivos e pastas para ignorar
+node_modules/
+.expo/

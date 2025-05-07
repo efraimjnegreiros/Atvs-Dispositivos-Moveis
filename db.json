@@ -1,0 +1,47 @@
+{
+    "usuario": {
+      "id": 1,
+      "nome": "Efraim Negreiros",
+      "email": "efraim@example.com",
+      "avatar": "user-circle"
+    },
+    "categorias": [
+      { "id": 1, "nome": "Consultation", "icone": "comments" },
+      { "id": 2, "nome": "Dentist", "icone": "tooth" },
+      { "id": 3, "nome": "Cardiologist", "icone": "heartbeat" },
+      { "id": 4, "nome": "Hospital", "icone": "hospital-o" },
+      { "id": 5, "nome": "Emergency", "icone": "ambulance" },
+      { "id": 6, "nome": "Laboratory", "icone": "flask" }
+    ],
+    "doctors": [
+      {
+        "id": 1,
+        "nome": "dr. Efraim Negreiros",
+        "describe": "Consultant - Internal Medicine",
+        "avaliacao": "4.9 (37 Reviews)",
+        "avatar": "user"
+      },
+      {
+        "id": 2,
+        "nome": "dr. Hércules Negreiros",
+        "describe": "Consultant - Physiotherapy",
+        "avaliacao": "4.9 (37 Reviews)",
+        "avatar": "male"
+      },
+      {
+        "id": 3,
+        "nome": "dr. Nilson Júnior",
+        "describe": "Pro    gramador",
+        "avaliacao": "4.9 (37 Reviews)",
+        "avatar": "male"
+      },
+      {
+        "id": 4,
+        "nome": "dr. Nilson ",
+        "describe": "Programador",
+        "avaliacao": "4.9 (37 Reviews)",
+        "avatar": "male"
+      }
+    ]
+  }
+  
