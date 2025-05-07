@@ -4,6 +4,8 @@ import { Input, Button, Avatar } from 'react-native-elements';
 import { StatusBar } from 'expo-status-bar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+
 
 function Login({ navigation, route }) {
   const [email, setEmail] = useState('');
@@ -12,7 +14,6 @@ function Login({ navigation, route }) {
   const login = async () => {
     try {
       console.log('Tentando fazer login...');
-      // Use o IP correto dependendo de onde está rodando
       const response = await axios.get(`http://127.0.0.1:3000/usuarios?email=${email}&senha=${senha}`);
       
       console.log('Resposta do servidor:', response.data);
@@ -69,7 +70,9 @@ function Login({ navigation, route }) {
       <Input
         placeholder="Digite o seu login..."
         keyboardType="email-address"
-        leftIcon={<Icon name="envelope" size={20} color="gray" />}
+        
+
+        leftIcon={<FontAwesome5 name="envelope" size={20} color="#gray"/>}
         inputContainerStyle={styles.inputContainer}
         inputStyle={styles.input}
         value={email}
@@ -79,7 +82,7 @@ function Login({ navigation, route }) {
       <Input
         placeholder="Digite a sua senha..."
         secureTextEntry={true}
-        leftIcon={<Icon name="lock" size={20} color="gray" />}
+        leftIcon={<FontAwesome5 name="lock" size={20} color="#gray"/>}
         inputContainerStyle={styles.inputContainer}
         inputStyle={styles.input}
         value={senha}

@@ -1,0 +1,35 @@
+{
+  "usuarios": [
+    {
+      "id": "1",
+      "email": "usuario1@dominio.com",
+      "senha": "senha123"
+    },
+    {
+      "id": "2",
+      "email": "usuario2@dominio.com",
+      "senha": "senha456"
+    },
+    {
+      "id": "2e61",
+      "nome": "a",
+      "email": "a@a.com",
+      "idade": "1",
+      "senha": "123"
+    }
+  ],
+  "contatos": [
+    {
+      "id": "2",
+      "nome": "Maria Oliveira",
+      "telefone": "987654321",
+      "email": "maria@dominio.com"
+    },
+    {
+      "id": "3670",
+      "nome": "z",
+      "telefone": "123",
+      "email": "z@a.com"
+    }
+  ]
+}
