@@ -1,0 +1,30 @@
+npm install -g eas-cli
+eas build:configure
+eas build -p android --profile preview
+
+app.json:
+{
+  "expo": {
+    "name": "MeuApp",
+    "slug": "meu-app",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "bundleIdentifier": "com.seunome.meuapp"
+    },
+    "android": {
+      "package": "com.seunome.meuapp"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ba11bbc2-25a7-44c8-9177-ed435a51cc8e"
+      }
+    }
+  }
+}
