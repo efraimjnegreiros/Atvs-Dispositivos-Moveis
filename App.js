@@ -1,137 +1,445 @@
-// App.js
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import SvgUri from 'expo-svg-uri';
+import * as Location from 'expo-location'; 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  StatusBar,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const cidadesDisponiveis = [
+  { name: 'Recife,Pe', label: 'Recife' },
+  { name: 'São Paulo,Sp', label: 'São Paulo' },
+  { name: 'Rio de Janeiro,Rj', label: 'Rio de Janeiro' },
+  { name: 'Belo Horizonte,Mg', label: 'Belo Horizonte' },
+  { name: 'Curitiba,Pr', label: 'Curitiba' },
+];
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.city}>📍 Fortaleza</Text>
-        <MaterialCommunityIcons name="weather-partly-rainy" size={64} color="#fff" />
-        <Text style={styles.temp}>28º</Text>
-        <Text style={styles.precip}>Precipitations</Text>
-        <Text style={styles.range}>Max.: 31º Min.: 25º</Text>
-        <View style={styles.details}>
-          <Text style={styles.detailText}>6%</Text>
-          <Text style={styles.detailText}>90%</Text>
-          <Text style={styles.detailText}>19 km/h</Text>
-        </View>
-      </View>
+  const [informacoes, setInformacoes] = useState({
+    city: '',
+    atual: null,
+    max: null,
+    min: null,
+    description: '',
+    condition_slug: '',
+    sunrise: '',
+    sunset: '',
+    humidity: null,
+    rain_probability: null,
+    wind_speedy: '',
+  });
 
-      <View style={styles.hourly}>
-        <Text style={styles.sectionTitle}>Today</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {[
-            { hour: '15.00', temp: 29, icon: 'weather-partly-cloudy' },
-            { hour: '16.00', temp: 26, icon: 'weather-partly-cloudy' },
-            { hour: '17.00', temp: 24, icon: 'weather-cloudy' },
-            { hour: '18.00', temp: 23, icon: 'weather-partly-cloudy' },
-          ].map((item, index) => (
-            <View key={index} style={styles.hourItem}>
-              <Text style={styles.hourTemp}>{item.temp}°C</Text>
-              <MaterialCommunityIcons name={item.icon} size={30} color="#fff" />
-              <Text style={styles.hourLabel}>{item.hour}</Text>
+  const [forecast, setForecast] = useState([]);
+  const [cidadeSelecionada, setCidadeSelecionada] = useState('Recife,Pe');
+  const [modalVisivel, setModalVisivel] = useState(false);
+
+  const buscarInformacoesAtuais = async (cidade) => {
+    try {
+      const response = await axios.get(
+        `https://api.hgbrasil.com/weather?key=1f815694&city_name=${cidade}`
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        const data = response.data.results;
+
+        setInformacoes({
+          city: data.city,
+          atual: data.temp,
+          max: data.forecast[0].max,
+          min: data.forecast[0].min,
+          description: data.description,
+          condition_slug: data.condition_slug,
+          sunrise: data.sunrise,
+          sunset: data.sunset,
+          humidity: data.humidity,
+          rain_probability: data.forecast[0].rain || 0,
+          wind_speedy: data.wind_speedy,
+        });
+
+        setForecast(data.forecast.slice(1, 7));
+      } else {
+        Alert.alert('Erro', 'Resposta inválida da API');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erro', 'Não foi possível buscar as informações.');
+    }
+  };
+
+  const buscarPorCoordenadas = async (latitude, longitude) => {
+    try {
+      const response = await axios.get(
+        `https://api.hgbrasil.com/weather?key=1f815694&lat=${latitude}&lon=${longitude}`
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        const data = response.data.results;
+
+        setInformacoes({
+          city: data.city,
+          atual: data.temp,
+          max: data.forecast[0].max,
+          min: data.forecast[0].min,
+          description: data.description,
+          condition_slug: data.condition_slug,
+          sunrise: data.sunrise,
+          sunset: data.sunset,
+          humidity: data.humidity,
+          rain_probability: data.forecast[0].rain || 0,
+          wind_speedy: data.wind_speedy,
+        });
+
+        setForecast(data.forecast.slice(1, 7));
+        setCidadeSelecionada(data.city); 
+      } else {
+        Alert.alert('Erro', 'Resposta inválida da API');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erro', 'Não foi possível buscar as informações pela localização.');
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão negada', 'Permissão para acessar localização foi negada. Usando cidade padrão.');
+        buscarInformacoesAtuais(cidadeSelecionada);
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      if (location) {
+        const { latitude, longitude } = location.coords;
+        buscarPorCoordenadas(latitude, longitude);
+      } else {
+        buscarInformacoesAtuais(cidadeSelecionada);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (cidadeSelecionada) {
+      buscarInformacoesAtuais(cidadeSelecionada);
+    }
+  }, [cidadeSelecionada]);
+
+  const selecionarCidade = (cidade) => {
+    setCidadeSelecionada(cidade);
+    setModalVisivel(false);
+  };
+
+  return (
+    <LinearGradient colors={['#0077be', '#00f0ff']} style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            onPress={() => setModalVisivel(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="location-sharp" size={24} color="white" />
+            <Text style={styles.city}>{informacoes.city || 'Carregando...'}</Text>
+            <Ionicons
+              name="chevron-down"
+              size={20}
+              color="white"
+              style={{ marginLeft: 5 }}
+            />
+          </TouchableOpacity>
+          <View>
+            <Ionicons name="notifications-outline" size={24} color="white" />
+            <View style={styles.notificationDot} />
+          </View>
+        </View>
+
+        <Modal
+          visible={modalVisivel}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setModalVisivel(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPressOut={() => setModalVisivel(false)}
+          >
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Escolha a cidade</Text>
+              <FlatList
+                data={cidadesDisponiveis}
+                keyExtractor={(item) => item.name}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.cityOption}
+                    onPress={() => selecionarCidade(item.name)}
+                  >
+                    <Text
+                      style={[
+                        styles.cityOptionText,
+                        item.name === cidadeSelecionada && { fontWeight: 'bold' },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        <View style={styles.card}>
+          <View style={styles.mainWeather}>
+            <SvgUri
+              source={{
+                uri: `https://assets.hgbrasil.com/weather/icons/conditions/${informacoes.condition_slug}.svg`,
+              }}
+              style={styles.weatherImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.temperature}>
+              {informacoes.atual !== null ? `${informacoes.atual}°` : '--'}
+            </Text>
+            <Text style={styles.condition}>{informacoes.description}</Text>
+            <Text style={styles.range}>
+              Max: {informacoes.max}° Min: {informacoes.min}°
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Métricas</Text>
+          <View style={styles.metrics}>
+            <View style={styles.metricItem}>
+              <Ionicons name="water" size={20} color="white" />
+              <Text style={styles.metricText}>
+                {informacoes.humidity !== null ? `${informacoes.humidity}%` : '--'}
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Ionicons name="rainy" size={20} color="white" />
+              <Text style={styles.metricText}>
+                {informacoes.rain_probability !== null
+                  ? `${informacoes.rain_probability}%`
+                  : '--'}
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Ionicons name="speedometer" size={20} color="white" />
+              <Text style={styles.metricText}>
+                {informacoes.wind_speedy || '--'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.card, styles.section]}>
+          <Text style={styles.sectionTitle}>Hoje</Text>
+          <View style={styles.hourlyForecast}>
+            <View style={styles.hourBlock}>
+              <Text style={styles.hourLabel}>Nascer do Sol:</Text>
+              <Text style={styles.hourValue}>{informacoes.sunrise}</Text>
+            </View>
+            <View style={styles.hourBlock}>
+              <Text style={styles.hourLabel}>Pôr do Sol:</Text>
+              <Text style={styles.hourValue}>{informacoes.sunset}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Próximos dias */}
+        <View style={[styles.card, styles.section]}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={styles.sectionTitle}>Próximos Dias</Text>
+            <Ionicons name="calendar-outline" size={24} color="white" />
+          </View>
+          {forecast.map((day, index) => (
+            <View key={index} style={styles.dailyBlock}>
+              <Text style={styles.weekday}>{day.weekday}</Text>
+              <SvgUri
+                source={{
+                  uri: `https://assets.hgbrasil.com/weather/icons/conditions/${day.condition}.svg`,
+                }}
+                style={styles.forecastIconLarge}
+                resizeMode="contain"
+              />
+              <Text style={styles.tempRange}>
+                {day.max}° / {day.min}°
+              </Text>
             </View>
           ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.forecast}>
-        <Text style={styles.sectionTitle}>Next Forecast</Text>
-        <View style={styles.forecastItem}>
-          <Text style={styles.day}>Monday</Text>
-          <MaterialCommunityIcons name="weather-pouring" size={28} color="#fff" />
-          <Text style={styles.dayTemp}>13º | 10º</Text>
         </View>
-        <View style={styles.forecastItem}>
-          <Text style={styles.day}>Tuesday</Text>
-          <MaterialCommunityIcons name="weather-sunny" size={28} color="#fff" />
-          <Text style={styles.dayTemp}>17º | 12º</Text>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D47A1',
-    padding: 20,
-    paddingTop: 50,
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  city: {
-    fontSize: 18,
-    color: '#fff',
-    marginBottom: 10,
-  },
-  temp: {
-    fontSize: 60,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  precip: {
-    fontSize: 18,
-    color: '#B3E5FC',
-  },
-  range: {
-    fontSize: 16,
-    color: '#B3E5FC',
-    marginBottom: 10,
-  },
-  details: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '80%',
-  },
-  detailText: {
-    fontSize: 16,
-    color: '#fff',
-  },
-  hourly: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    color: '#fff',
-    marginBottom: 10,
-  },
-  hourItem: {
-    alignItems: 'center',
-    marginRight: 20,
-    backgroundColor: '#1976D2',
-    borderRadius: 12,
-    padding: 10,
-    width: 80,
-  },
-  hourTemp: {
-    fontSize: 16,
-    color: '#fff',
-  },
-  hourLabel: {
-    fontSize: 14,
-    color: '#fff',
-  },
-  forecast: {},
-  forecastItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#1565C0',
-    borderRadius: 12,
-    padding: 15,
+    alignItems: 'center',
+    padding: 20,
+  },
+  city: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  notificationDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+    position: 'absolute',
+    top: -2,
+    right: -2,
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 15,
+    padding: 20,
+    marginHorizontal: 20,
+    marginVertical: 10,
+  },
+  mainWeather: {
+    alignItems: 'center',
+  },
+  weatherImage: {
+    width: 100,
+    height: 100,
     marginBottom: 10,
   },
-  day: {
-    fontSize: 18,
-    color: '#fff',
+  temperature: {
+    color: 'white',
+    fontSize: 50,
+    fontWeight: 'bold',
   },
-  dayTemp: {
+  condition: {
+    color: 'white',
     fontSize: 18,
-    color: '#fff',
+    marginVertical: 5,
+  },
+  range: {
+    color: 'lightgray',
+    fontSize: 14,
+  },
+  metrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  metricItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metricText: {
+    color: 'white',
+    fontSize: 16,
+    marginLeft: 6,
+  },
+  section: {
+    marginTop: 0,
+  },
+  sectionTitle: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 15,
+  },
+  hourlyForecast: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  hourBlock: {
+    alignItems: 'center',
+  },
+  hourLabel: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  hourValue: {
+    color: 'white',
+    fontSize: 16,
+    marginTop: 5,
+  },
+  weekday: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dailyBlock: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  forecastIconLarge: {
+    width: 40,
+    height: 40,
+    marginHorizontal: 10,
+  },
+  tempRange: {
+    color: 'white',
+    fontSize: 16,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  modalContainer: {
+    backgroundColor: '#0077be',
+    borderRadius: 15,
+    padding: 20,
+    maxHeight: '50%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  cityOption: {
+    paddingVertical: 12,
+    borderBottomColor: 'rgba(255,255,255,0.3)',
+    borderBottomWidth: 1,
+  },
+  cityOptionText: {
+    fontSize: 18,
+    color: 'white',
   },
 });
