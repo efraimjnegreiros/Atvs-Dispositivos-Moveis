@@ -25,21 +25,20 @@ const cidadesDisponiveis = [
   { name: 'Curitiba,Pr', label: 'Curitiba' },
 ];
 
-// Função para definir o gradiente com base no clima (condition_slug)
 const getGradientColors = (condition) => {
   switch (condition) {
     case 'clear_day':
-      return ['#00c6ff', '#0072ff']; // Azul claro
+      return ['#00c6ff', '#0072ff']; 
     case 'rain':
     case 'storm':
-      return ['#2c3e50', '#4ca1af']; // Chuva
+      return ['#2c3e50', '#4ca1af']; 
     case 'cloudly_day':
     case 'cloud':
-      return ['#bdc3c7', '#2c3e50']; // Nublado
+      return ['#bdc3c7', '#2c3e50']; 
     case 'clear_night':
-      return ['#141E30', '#243B55']; // Noite clara
+      return ['#141E30', '#243B55']; 
     default:
-      return ['#0077be', '#00f0ff']; // Padrão
+      return ['#0077be', '#00f0ff']; 
   }
 };
 
@@ -273,7 +272,7 @@ export default function App() {
               </Text>
             </View>
             <View style={styles.metricItem}>
-              <Ionicons name="leaf-outline" size={20} color="white" />
+              <Ionicons name="speedometer" size={20} color="white" />
               <Text style={styles.metricText}>
                 {informacoes.wind_speedy || '--'}
               </Text>
@@ -285,12 +284,10 @@ export default function App() {
           <Text style={styles.sectionTitle}>Hoje</Text>
           <View style={styles.hourlyForecast}>
             <View style={styles.hourBlock}>
-              <Ionicons name="sunny-outline" size={20} color="white" />
               <Text style={styles.hourLabel}>Nascer do Sol:</Text>
               <Text style={styles.hourValue}>{informacoes.sunrise}</Text>
             </View>
             <View style={styles.hourBlock}>
-              <Ionicons name="partly-sunny-outline" size={20} color="white" />
               <Text style={styles.hourLabel}>Pôr do Sol:</Text>
               <Text style={styles.hourValue}>{informacoes.sunset}</Text>
             </View>
@@ -312,8 +309,6 @@ export default function App() {
             <View key={index} style={styles.dailyBlock}>
               <Text style={styles.weekday}>{day.weekday}</Text>
               <SvgUri
-                width={50}
-                height={50}
                 source={{
                   uri: `https://assets.hgbrasil.com/weather/icons/conditions/${day.condition}.svg`,
                 }}
@@ -453,38 +448,39 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
+    backgroundColor: '#000000aa',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#0077be',
-    borderRadius: 15,
+    backgroundColor: '#222',
     padding: 20,
-    maxHeight: '50%',
+    borderTopRightRadius: 25,
+    borderTopLeftRadius: 25,
+    maxHeight: '70%',
   },
   modalTitle: {
+    color: 'white',
     fontSize: 22,
     fontWeight: '700',
-    color: 'white',
     marginBottom: 15,
     textAlign: 'center',
   },
+  input: {
+    backgroundColor: '#444',
+    borderRadius: 10,
+    color: 'white',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 15,
+  },
   cityOption: {
     paddingVertical: 12,
-    borderBottomColor: 'rgba(255,255,255,0.3)',
     borderBottomWidth: 1,
+    borderBottomColor: '#555',
   },
   cityOptionText: {
-    fontSize: 18,
     color: 'white',
-  },
-  input: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 15,
-    fontSize: 16,
-    color: 'black',
+    fontSize: 18,
   },
 });
