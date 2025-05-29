@@ -70,7 +70,7 @@ export default function App() {
   const buscarInformacoesAtuais = async (cidade) => {
     try {
       const response = await axios.get(
-        `https://api.hgbrasil.com/weather?key=1f815694&city_name=${cidade}`
+        `https://api.hgbrasil.com/weather?key=de082547&city_name=${cidade}`
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -103,7 +103,7 @@ export default function App() {
   const buscarPorCoordenadas = async (latitude, longitude) => {
     try {
       const response = await axios.get(
-        `https://api.hgbrasil.com/weather?key=1f815694&lat=${latitude}&lon=${longitude}`
+        `https://api.hgbrasil.com/weather?key=de082547&lat=${latitude}&lon=${longitude}`
       );
 
       if (response.status === 200 || response.status === 201) {
