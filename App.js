@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import SvgUri from 'expo-svg-uri';
-import * as Location from 'expo-location'; 
+import { ActivityIndicator } from 'react-native';
+
+import * as Location from 'expo-location';
 import {
   View,
   Text,
@@ -28,21 +30,24 @@ const cidadesDisponiveis = [
 const getGradientColors = (condition) => {
   switch (condition) {
     case 'clear_day':
-      return ['#00c6ff', '#0072ff']; 
+      return ['#00c6ff', '#0072ff'];
     case 'rain':
     case 'storm':
-      return ['#2c3e50', '#4ca1af']; 
+      return ['#2c3e50', '#4ca1af'];
     case 'cloudly_day':
     case 'cloud':
-      return ['#bdc3c7', '#2c3e50']; 
+      return ['#bdc3c7', '#2c3e50'];
     case 'clear_night':
-      return ['#141E30', '#243B55']; 
+      return ['#141E30', '#243B55'];
     default:
-      return ['#0077be', '#00f0ff']; 
+      return ['#0077be', '#00f0ff'];
   }
 };
 
 export default function App() {
+  const [carregandoBusca, setCarregandoBusca] = useState(false);
+  const [carregando, setCarregando] = useState(false);
+
   const [informacoes, setInformacoes] = useState({
     city: '',
     atual: null,
@@ -119,7 +124,7 @@ export default function App() {
         });
 
         setForecast(data.forecast.slice(1, 7));
-        setCidadeSelecionada(data.city); 
+        setCidadeSelecionada(data.city);
       } else {
         Alert.alert('Erro', 'Resposta inválida da API');
       }
@@ -184,56 +189,101 @@ export default function App() {
             <View style={styles.notificationDot} />
           </View>
         </View>
-
         <Modal
           visible={modalVisivel}
           transparent={true}
           animationType="slide"
           onRequestClose={() => setModalVisivel(false)}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPressOut={() => setModalVisivel(false)}
-          >
+          <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Escolha ou Pesquise</Text>
+              <Text style={styles.modalTitle}>Buscar Cidade</Text>
 
               <TextInput
-                placeholder="Digite o nome da cidade"
-                placeholderTextColor="#ccc"
                 style={styles.input}
+                placeholder="Digite o nome da cidade..."
+                placeholderTextColor="#ccc"
                 value={cidadeBusca}
                 onChangeText={setCidadeBusca}
-                onSubmitEditing={() => {
-                  if (cidadeBusca.trim()) {
-                    selecionarCidade(cidadeBusca.trim());
-                  }
-                }}
               />
 
-              <FlatList
-                data={cidadesDisponiveis}
-                keyExtractor={(item) => item.name}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.cityOption}
-                    onPress={() => selecionarCidade(item.name)}
-                  >
-                    <Text
-                      style={[
-                        styles.cityOptionText,
-                        item.name === cidadeSelecionada && { fontWeight: 'bold' },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={async () => {
+                  if (!cidadeBusca.trim()) {
+                    Alert.alert('Atenção', 'Digite uma cidade válida.');
+                    return;
+                  }
+                  try {
+                    setCarregandoBusca(true);
+                    await buscarInformacoesAtuais(cidadeBusca.trim());
+                    setCidadeSelecionada(cidadeBusca.trim());
+                    setModalVisivel(false);
+                    setCidadeBusca('');
+                  } catch (error) {
+                    Alert.alert('Erro', 'Não foi possível buscar a cidade.');
+                  } finally {
+                    setCarregandoBusca(false);
+                  }
+                }}
+                disabled={carregandoBusca}
+              >
+                {carregandoBusca ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="search" size={20} color="white" style={{ marginRight: 8 }} />
+                    <Text style={styles.searchButtonText}>Buscar</Text>
+                  </>
                 )}
-              />
+              </TouchableOpacity>
+
+
+              <TouchableOpacity
+                style={styles.locationButton}
+                onPress={async () => {
+                  try {
+                    setCarregando(true);
+                    let { status } = await Location.requestForegroundPermissionsAsync();
+                    if (status !== 'granted') {
+                      Alert.alert('Permissão negada', 'Não foi possível acessar sua localização.');
+                      setCarregando(false);
+                      return;
+                    }
+
+                    let location = await Location.getCurrentPositionAsync({});
+                    if (location) {
+                      const { latitude, longitude } = location.coords;
+                      await buscarPorCoordenadas(latitude, longitude);
+                      setModalVisivel(false);
+                      setCidadeBusca('');
+                    }
+                  } catch (error) {
+                    console.error(error);
+                    Alert.alert('Erro', 'Falha ao acessar a localização.');
+                  } finally {
+                    setCarregando(false);
+                  }
+                }}
+                disabled={carregando}
+              >
+                {carregando ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="locate" size={20} color="white" style={{ marginRight: 8 }} />
+                    <Text style={styles.locationButtonText}>Usar localização atual</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
             </View>
-          </TouchableOpacity>
+          </View>
         </Modal>
+
+
+
+
 
         <View style={styles.card}>
           <View style={styles.mainWeather}>
@@ -271,12 +321,11 @@ export default function App() {
                   : '--'}
               </Text>
             </View>
-            <View style={styles.metricItem}>
-              <Ionicons name="speedometer" size={20} color="white" />
-              <Text style={styles.metricText}>
-                {informacoes.wind_speedy || '--'}
-              </Text>
-            </View>
+            <Ionicons name="leaf-outline" size={20} color="white" />
+            <Text style={styles.metricText}>
+              {informacoes.wind_speedy || '--'}
+            </Text>
+
           </View>
         </View>
 
@@ -284,13 +333,17 @@ export default function App() {
           <Text style={styles.sectionTitle}>Hoje</Text>
           <View style={styles.hourlyForecast}>
             <View style={styles.hourBlock}>
-              <Text style={styles.hourLabel}>Nascer do Sol:</Text>
+              <Ionicons name="sunny-outline" size={28} color="white" />
+              <Text style={styles.hourLabel}>Nascer do Sol</Text>
               <Text style={styles.hourValue}>{informacoes.sunrise}</Text>
             </View>
+
             <View style={styles.hourBlock}>
-              <Text style={styles.hourLabel}>Pôr do Sol:</Text>
+              <Ionicons name="partly-sunny-outline" size={28} color="white" />
+              <Text style={styles.hourLabel}>Pôr do Sol</Text>
               <Text style={styles.hourValue}>{informacoes.sunset}</Text>
             </View>
+
           </View>
         </View>
 
@@ -309,6 +362,8 @@ export default function App() {
             <View key={index} style={styles.dailyBlock}>
               <Text style={styles.weekday}>{day.weekday}</Text>
               <SvgUri
+                width={50}
+                height={50}
                 source={{
                   uri: `https://assets.hgbrasil.com/weather/icons/conditions/${day.condition}.svg`,
                 }}
@@ -448,22 +503,81 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+
   modalContainer: {
-    backgroundColor: '#222',
-    padding: 20,
-    borderTopRightRadius: 25,
-    borderTopLeftRadius: 25,
-    maxHeight: '70%',
+    width: '90%',
+    backgroundColor: '#2c2c2e',
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
   },
+
   modalTitle: {
-    color: 'white',
     fontSize: 22,
     fontWeight: '700',
-    marginBottom: 15,
+    color: '#fff',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+
+  input: {
+    backgroundColor: '#3a3a3c',
+    borderRadius: 10,
+    color: 'white',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 15,
+  },
+
+  searchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+
+  searchButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#636366',
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+
+  locationButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+
+  cityOption: {
+    paddingVertical: 12,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomWidth: 1,
+  },
+  cityOptionText: {
+    fontSize: 18,
+    color: '#333',
   },
   input: {
     backgroundColor: '#444',
@@ -473,14 +587,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 15,
-  },
-  cityOption: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#555',
-  },
-  cityOptionText: {
-    color: 'white',
-    fontSize: 18,
   },
 });
